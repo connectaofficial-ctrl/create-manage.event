@@ -225,7 +225,7 @@
       <div class="login-title">connec+a</div>
       <div class="login-sub" data-i18n="adminPanel">Admin Panel</div>
       <input id="pw-input" class="login-input" type="password" data-i18n-ph="passwordPlaceholder" placeholder="パスワードを入力">
-      <button class="login-btn" onclick="doLogin()" data-i18n="loginBtn">ログイン</button>
+      <button class="login-btn" id="login-btn" data-i18n="loginBtn">ログイン</button>
       <div class="login-error" id="login-error"></div>
     </div>
   </div>
@@ -426,7 +426,8 @@ function doLogin(){
   }else{document.getElementById('login-error').textContent=t('wrongPassword');}
 }
 function doLogout(){sessionStorage.removeItem('admin_auth');location.reload();}
-document.getElementById('pw-input').addEventListener('keydown',e=>{if(e.key==='Enter')doLogin();});
+document.getElementById('pw-input').addEventListener('keydown',function(e){if(e.key==='Enter')doLogin();});
+document.getElementById('login-btn').addEventListener('click',function(){doLogin();});
 if(sessionStorage.getItem('admin_auth')==='1'){
   document.getElementById('login-screen').style.display='none';
   document.getElementById('admin-screen').style.display='block';
@@ -640,7 +641,7 @@ async function loadEvents() {
               (ev.Status === 'OPEN'
                 ? '<span class="badge badge-open">' + t('open') + '</span>'
                 : '<span class="badge badge-closed">' + t('closed') + '</span>') +
-              '<button class="btn btn-outline btn-sm" onclick='openEditModal(' + JSON.stringify(ev) + ')'>' + t('editEvent') + '</button>' +
+              '<button class="btn btn-outline btn-sm" onclick="openEditById(\''+esc(ev.EventID)+'\')">'+t('editEvent')+'</button>' +
               (ev.Status === 'OPEN'
                 ? '<button class="btn btn-sm" style="background:rgba(212,81,26,.1);color:var(--aki);border:none;" onclick="toggleEventStatus('' + esc(ev.EventID) + '','CLOSED')">' + t('closeEvent') + '</button>'
                 : '<button class="btn btn-sm" style="background:rgba(78,114,82,.1);color:var(--matcha);border:none;" onclick="toggleEventStatus('' + esc(ev.EventID) + '','OPEN')">' + t('reopenEvent') + '</button>'
@@ -667,6 +668,15 @@ function openCreateModal() {
   document.getElementById('modal-alert').innerHTML = '';
   const modal = document.getElementById('event-modal');
   modal.style.display = 'flex';
+}
+
+async function openEditById(eventId) {
+  try {
+    const stats = await api('getStats');
+    const ev = (stats.eventStats || []).find(function(e){ return e.EventID === eventId; });
+    if (!ev) { toastFn('danger', 'イベントが見つかりません'); return; }
+    openEditModal(ev);
+  } catch(err) { toastFn('danger', err.message); }
 }
 
 function openEditModal(ev) {
